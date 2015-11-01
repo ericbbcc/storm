@@ -99,6 +99,9 @@ public class TopologyBuilder {
      * 存储Bolt标识->Bolt的映射
      */
     private Map<String, IRichBolt> _bolts = new HashMap<String, IRichBolt>();
+    /**
+     * 存储Spout标识->Spot的映射
+     */
     private Map<String, IRichSpout> _spouts = new HashMap<String, IRichSpout>();
     private Map<String, ComponentCommon> _commons = new HashMap<String, ComponentCommon>();
 
