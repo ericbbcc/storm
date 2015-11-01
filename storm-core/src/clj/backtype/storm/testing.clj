@@ -117,11 +117,12 @@
 ;; local dir is always overridden in maps
 ;; can customize the supervisors (except for ports) by passing in map for :supervisors parameter
 ;; if need to customize amt of ports more, can use add-supervisor calls afterwards
+;; 默认配置是:两组supervisor、每个端口3个supervisor、daemon-conf由LocalCluster传入、inimbus为空supervisor最小的端口1024
 (defnk mk-local-storm-cluster [:supervisors 2 :ports-per-supervisor 3 :daemon-conf {} :inimbus nil :supervisor-slot-port-min 1024]
-  (let [zk-tmp (local-temp-path)
-        [zk-port zk-handle] (if-not (contains? daemon-conf STORM-ZOOKEEPER-SERVERS)
-                              (zk/mk-inprocess-zookeeper zk-tmp))
-        daemon-conf (merge (read-storm-config)
+  (let [zk-tmp (local-temp-path) ;;ZK本地目录，由java.io.tmpdir属性指定
+        [zk-port zk-handle] (if-not (contains? daemon-conf STORM-ZOOKEEPER-SERVERS) ;;如果daemon-conf没有指定STORM-ZOOKEEPER-SERVERS值,
+                              (zk/mk-inprocess-zookeeper zk-tmp)) ;;则调用zk/mk-inprocess-zookeeper并将结果赋值给zk-port和zk-handle
+        daemon-conf (merge (read-storm-config) ;;重新构造daemon-conf对象
                            {TOPOLOGY-SKIP-MISSING-KRYO-REGISTRATIONS true
                             ZMQ-LINGER-MILLIS 0
                             TOPOLOGY-ENABLE-MESSAGE-TIMEOUTS false
@@ -131,12 +132,12 @@
                              {STORM-ZOOKEEPER-PORT zk-port
                               STORM-ZOOKEEPER-SERVERS ["localhost"]})
                            daemon-conf)
-        nimbus-tmp (local-temp-path)
-        port-counter (mk-counter supervisor-slot-port-min)
+        nimbus-tmp (local-temp-path);;设置nimbus-tmp的目录
+        port-counter (mk-counter supervisor-slot-port-min);;设置端口计数器
         nimbus (nimbus/service-handler
-                 (assoc daemon-conf STORM-LOCAL-DIR nimbus-tmp)
-                 (if inimbus inimbus (nimbus/standalone-nimbus)))
-        context (mk-shared-context daemon-conf)
+                 (assoc daemon-conf STORM-LOCAL-DIR nimbus-tmp);;将{STORM-LOCAL-DIR nimbus-tmp}配置加入daemon-conf
+                 (if inimbus inimbus (nimbus/standalone-nimbus)));;如果inimbus为空，调用nimbus/standalone-nimbus拿nimbus
+        context (mk-shared-context daemon-conf);;构造上下文
         cluster-map {:nimbus nimbus
                      :port-counter port-counter
                      :daemon-conf daemon-conf

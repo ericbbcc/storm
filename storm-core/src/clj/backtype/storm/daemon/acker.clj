@@ -13,6 +13,9 @@
 ;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
+
+;; AckerBlot的实现
+;; import和requier类似，import用来引入java，require用来引入clojure
 (ns backtype.storm.daemon.acker
   (:import [backtype.storm.task OutputCollector TopologyContext IBolt])
   (:import [backtype.storm.tuple Tuple Fields])

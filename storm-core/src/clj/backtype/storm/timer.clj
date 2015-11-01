@@ -14,6 +14,7 @@
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
 
+;; 基于线程的定时器实现
 (ns backtype.storm.timer
   (:import [backtype.storm.utils Time])
   (:import [java.util PriorityQueue Comparator])

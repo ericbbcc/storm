@@ -14,6 +14,7 @@
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
 
+;; Strom中的Disruptor Queue的使用包装
 (ns backtype.storm.disruptor
   (:import [backtype.storm.utils DisruptorQueue WorkerBackpressureCallback DisruptorBackpressureCallback])
   (:import [com.lmax.disruptor MultiThreadedClaimStrategy SingleThreadedClaimStrategy

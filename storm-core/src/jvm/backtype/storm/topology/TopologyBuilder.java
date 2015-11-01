@@ -37,6 +37,10 @@ import java.util.Map;
 import org.json.simple.JSONValue;
 
 /**
+ * TopologyBuilder暴露JAVA API接口，用来构造用于Strom执行的topology。Topologies最终构造的是一个Thrift结构，
+ * 但是、鉴于Thrift API是非常冗长繁琐的，TopologyBuilder使得出创建拓扑变得很容易。创建和提交topology的模板如下面所示：
+ *
+ *
  * TopologyBuilder exposes the Java API for specifying a topology for Storm
  * to execute. Topologies are Thrift structures in the end, but since the Thrift API
  * is so verbose, TopologyBuilder greatly eases the process of creating topologies.
@@ -58,6 +62,8 @@ import org.json.simple.JSONValue;
  * 
  * StormSubmitter.submitTopology("mytopology", conf, builder.createTopology());
  * </pre>
+ *
+ * 下面是本地模式运行同样的拓扑的代码。
  *
  * Running the exact same topology in local mode (in process), and configuring it to log all tuples
  * emitted, looks like the following. Note that it lets the topology run for 10 seconds
@@ -89,6 +95,9 @@ import org.json.simple.JSONValue;
  * the inputs for that component.</p>
  */
 public class TopologyBuilder {
+    /**
+     * 存储Bolt标识->Bolt的映射
+     */
     private Map<String, IRichBolt> _bolts = new HashMap<String, IRichBolt>();
     private Map<String, IRichSpout> _spouts = new HashMap<String, IRichSpout>();
     private Map<String, ComponentCommon> _commons = new HashMap<String, ComponentCommon>();
@@ -198,8 +207,8 @@ public class TopologyBuilder {
      * @throws IllegalArgumentException if {@code parallelism_hint} is not positive
      */
     public SpoutDeclarer setSpout(String id, IRichSpout spout, Number parallelism_hint) throws IllegalArgumentException {
-        validateUnusedId(id);
-        initCommon(id, spout, parallelism_hint);
+        validateUnusedId(id);//校验Spout的标识是否已经被用过
+        initCommon(id, spout, parallelism_hint);//IRichSpout是扩展IComponent的
         _spouts.put(id, spout);
         return new SpoutGetter(id);
     }

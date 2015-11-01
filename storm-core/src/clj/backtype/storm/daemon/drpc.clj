@@ -14,6 +14,7 @@
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
 
+;; Storm DRPC服务器的实现
 (ns backtype.storm.daemon.drpc
   (:import [backtype.storm.security.auth AuthUtils ThriftServer ThriftConnectionType ReqContext])
   (:import [backtype.storm.security.auth.authorizer DRPCAuthorizerBase])
