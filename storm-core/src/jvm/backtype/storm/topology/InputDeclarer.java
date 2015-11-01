@@ -142,6 +142,9 @@ public interface InputDeclarer<T extends InputDeclarer> {
     public T directGrouping(String componentId, String streamId);
 
     /**
+     * Tuples会被传入两个哈希函数，每个目标任务由通过对哈希结果的比较得到。
+     * 这是一种负载均衡策略。
+     *
      * Tuples are passed to two hashing functions and each target task is
      * decided based on the comparison of the state of candidate nodes.
      * @see   https://melmeric.files.wordpress.com/2014/11/the-power-of-both-choices-practical-load-balancing-for-distributed-stream-processing-engines.pdf
