@@ -22,6 +22,7 @@ public class Testing {
     public static String OS_TMPDIR = "java.io.tmpdir";
 
     public static String STORM_ZOOKEEPER_SERVERS = "STORM_ZOOKEEPER_SERVERS";
+    public static int TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS = 3;
 
     public static int DEFAULT_SUPERVISOR = 2;
     public static int DEFAULT_PORTSPRESUPERVISOR = 3;
@@ -39,6 +40,7 @@ public class Testing {
         if(deamenConf == null || !deamenConf.containsKey(STORM_ZOOKEEPER_SERVERS)){
             zkInfo = ZooKeeper.makeInprocessZooKeeper(zkTmp, 0);
         }
+        Map stormConfig = ConfigUtils.readStormConfig();
 
 
 
