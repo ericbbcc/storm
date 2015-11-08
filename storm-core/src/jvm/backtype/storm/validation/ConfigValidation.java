@@ -510,7 +510,7 @@ public class ConfigValidation {
             LOG.warn("Field {} does not have validator annotation", field);
         }
 
-        for (Annotation annotation : annotations) {
+        for (Annotation annotation : annotations) {//isInteger
             String type = annotation.annotationType().getName();
             Class validatorClass = null;
             Class<?>[] classes = ConfigValidationAnnotations.class.getDeclaredClasses();
@@ -560,7 +560,7 @@ public class ConfigValidation {
      */
     public static void validateFields(Map conf, Class configClass) throws IllegalAccessException, InstantiationException, NoSuchFieldException, NoSuchMethodException, InvocationTargetException {
         for (Field field : configClass.getFields()) {
-            Object keyObj = field.get(null);
+            Object keyObj = field.get(null);//获取当前域的值
             //make sure that defined key is string in case wrong stuff got put into Config.java
             if (keyObj instanceof String) {
                 String confKey = (String) keyObj;

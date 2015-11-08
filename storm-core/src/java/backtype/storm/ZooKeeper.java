@@ -21,6 +21,7 @@ public class ZooKeeper {
     public static InProcessZKInfo makeInprocessZooKeeper(final String localdir, int port) throws IOException,InterruptedException{
         File localFile = new File(localdir);
         ZooKeeperServer zk = new ZooKeeperServer(localFile, localFile, 2000);
+
         NIOServerCnxnFactory factory = new NIOServerCnxnFactory();
         if(port == 0){
             port = 2000;

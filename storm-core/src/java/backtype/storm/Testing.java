@@ -2,6 +2,7 @@ package backtype.storm;
 
 import backtype.storm.entity.InProcessZKInfo;
 import backtype.storm.scheduler.INimbus;
+import backtype.storm.utils.Counter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,13 +38,33 @@ public class Testing {
         String zkTmp               =  localTempPath();
         InProcessZKInfo zkInfo = null;
 
-        if(deamenConf == null || !deamenConf.containsKey(STORM_ZOOKEEPER_SERVERS)){
+        if(deamenConf == null || !deamenConf.containsKey(Config.STORM_ZOOKEEPER_SERVERS)){
             zkInfo = ZooKeeper.makeInprocessZooKeeper(zkTmp, 0);
         }
-        Map stormConfig = ConfigUtils.readStormConfig();
+        Map stormConf = null;
+        try {
+            stormConf = ConfigUtils.readStormConfig();
+        }catch (Exception e){
 
+        }
 
-
+        Properties properties = new Properties();
+        {
+            properties.putAll(stormConf);
+            properties.put(Config.TOPOLOGY_SKIP_MISSING_KRYO_REGISTRATIONS, true);
+            properties.put(Config.ZMQ_LINGER_MILLIS, 0);
+            properties.put(Config.TOPOLOGY_ENABLE_MESSAGE_TIMEOUTS, false);
+            properties.put(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS, 50);
+            properties.put(Config.STORM_CLUSTER_MODE, "local");
+            if(!deamenConf.containsKey(Config.STORM_ZOOKEEPER_SERVERS)){
+                properties.put(Config.STORM_ZOOKEEPER_PORT, zkInfo.getPort());
+                properties.put(Config.STORM_ZOOKEEPER_SERVERS, Arrays.asList(new String[]{"localhost"}));
+            }
+            properties.putAll(deamenConf);
+        }
+        String nimbusTmpPath = localTempPath();
+        Counter portCounter = Util.mkCounter(_supervisorSlotPortMin);
+        INimbus nimbus
 
     }
 

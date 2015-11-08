@@ -92,9 +92,9 @@
 
 (defmacro defserverfn [name & body]
   `(let [exec-fn# (fn ~@body)]
-    (defn ~name [& args#]
+    (defn ~name [& args#];; defn service-handler [& args]
       (try-cause
-        (apply exec-fn# args#)
+        (apply exec-fn# args#);apply (fn [conf inimbus] ...) [& args]
       (catch InterruptedIOException e#
         (throw e#))
       (catch InterruptedException e#

@@ -82,6 +82,7 @@
   ([name orig doc]
    (list `defalias (with-meta name (assoc (meta name) :doc doc)) orig)))
 
+;; 在宏定义中使用。处理选项中文档字符串和属性的映射，
 ;; name-with-attributes by Konrad Hinsen:
 (defn name-with-attributes
   "To be used in macro definitions.
@@ -93,8 +94,8 @@
   macro argument list. The return value is a vector containing the name
   with its extended metadata map and the list of unprocessed macro
   arguments."
-  [name macro-args]
-  (let [[docstring macro-args] (if (string? (first macro-args))
+  [name macro-args];; exp:[mk-distributed-cluster-state conf :auth-conf nil :acls nil :separate-zk-writer? false]
+  (let [[docstring macro-args] (if (string? (first macro-args));;
                                  [(first macro-args) (next macro-args)]
                                  [nil macro-args])
         [attr macro-args] (if (map? (first macro-args))
@@ -106,7 +107,7 @@
         attr (if (meta name)
                (conj (meta name) attr)
                attr)]
-    [(with-meta name attr) macro-args]))
+    [(with-meta name attr) macro-args]));;返回有元数据的符号和...
 
 (defmacro defnk
   "Define a function accepting keyword arguments. Symbols up to the first
