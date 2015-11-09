@@ -165,7 +165,7 @@
                   (.. zk (getData) (watched) (storingStatIn stats) (forPath path))
                   (.. zk (getData) (storingStatIn stats) (forPath path))))]
        {:data data
-        :version (.getVersion stats)})
+        :version (. stats)})
      (catch KeeperException$NoNodeException e
        ;; this is fine b/c we still have a watch from the successful exists call
        nil ))))

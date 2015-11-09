@@ -9,6 +9,5 @@ public class LocalCluster {
         private int supervisors;
         private int portsPreSupervisors;
         private int daemonConf;
-        private
     }
 }

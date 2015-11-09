@@ -14,6 +14,10 @@ public class Cluster {
         void deleteNode(String path);
         String createSequential(String path, byte[] data, List<ACL> acls);
         void setData(String path, byte[] data, List<ACL> acls);
+        byte[] getData(String path, boolean isWatch);
+        int getVersion(String path, boolean isWatch);
+        byte[] getDataWithVersion(String path, boolean isWatch);
+        List<String> getChildren(String path, boolean isWatch);
 
     }
 
