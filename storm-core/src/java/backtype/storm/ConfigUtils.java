@@ -20,24 +20,28 @@ public class ConfigUtils {
         return conf;
     }
 
-    public static String getMasterInimbusDir(Properties conf)throws IOException{
+    public static String getMasterInimbusDir(Map conf){
         StringBuilder sb = new StringBuilder(getMasterLocalDir(conf));
         sb.append(getFilePathSeparator());
         sb.append("inimbus");
         return sb.toString();
     }
 
-    public static String getMasterLocalDir(Properties conf)throws IOException{
+    public static String getMasterLocalDir(Map conf){
         StringBuilder sb = new StringBuilder(getAbsoluteStormLocalDir(conf));
         sb.append(getFilePathSeparator());
         sb.append("nimbus");
-        FileUtils.forceMkdir(new File(sb.toString()));
+        try {
+            FileUtils.forceMkdir(new File(sb.toString()));
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
         return sb.toString();
     }
 
-    public static String getAbsoluteStormLocalDir(Properties conf){
+    public static String getAbsoluteStormLocalDir(Map conf){
         String stormHome = System.getProperty("storm.home");
-        String path = conf.getProperty(Config.STORM_LOCAL_DIR);
+        String path = (String)conf.get(Config.STORM_LOCAL_DIR);
         if(path != null && path.trim() != ""){
             if(Util.isAbsolutePath(path)){
                 return path;
@@ -53,6 +57,14 @@ public class ConfigUtils {
             sb.append("storm-local");
             return sb.toString();
         }
+    }
+
+    public static String getMasterStormDistRoot(Map conf){
+        return getMasterLocalDir(conf) + getFilePathSeparator() + "stormdist";
+    }
+
+    public static String getMasterStormDistRoot(Properties conf, String stormId){
+        return getMasterLocalDir(conf) + getFilePathSeparator() + stormId;
     }
 
     public static String getFilePathSeparator(){

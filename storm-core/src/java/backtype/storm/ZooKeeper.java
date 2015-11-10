@@ -2,12 +2,18 @@ package backtype.storm;
 
 import backtype.storm.entity.DataWithVersion;
 import backtype.storm.entity.InProcessZKInfo;
+import backtype.storm.nimbus.ILeaderElector;
+import backtype.storm.nimbus.NimbusInfo;
 import backtype.storm.utils.Utils;
 import backtype.storm.utils.ZookeeperAuthInfo;
+import org.apache.commons.lang.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorEvent;
 import org.apache.curator.framework.api.CuratorEventType;
 import org.apache.curator.framework.api.CuratorListener;
+import org.apache.curator.framework.recipes.leader.LeaderLatch;
+import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
+import org.apache.curator.framework.recipes.leader.Participant;
 import org.apache.curator.framework.state.ConnectionStateListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -22,8 +28,12 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 
@@ -83,7 +93,7 @@ public class ZooKeeper {
     }
 
 
-    public CuratorFramework makeClient(Map conf, List<String> severs, int port,
+    public static CuratorFramework makeClient(Map conf, List<String> severs, int port,
                                      String root, final Watcher watcher, Map authConf){
         if(root == null){
             root = "";
@@ -293,7 +303,177 @@ public class ZooKeeper {
         handler.shutdown();
     }
 
-    public static void toNimbusInfo(Participant participant)
+
+    public static NimbusInfo toNimbusInfo(Participant participant){
+        if(StringUtils.isBlank(participant.getId())){
+            throw new RuntimeException("No nimbus leader participant host found, have you started your nimbus hosts?");
+        }
+        String id = participant.getId();
+        NimbusInfo nimbusInfo = NimbusInfo.parse(id);
+        nimbusInfo.setLeader(participant.isLeader());
+        return nimbusInfo;
+    }
+
+    /**
+     * LeaderLatchListener当节点失去或者成为领导者的时候会被调用
+     */
+    public static class LeaderLatchListenerImpl implements LeaderLatchListener {
+
+        private Map conf;
+        private CuratorFramework zk;
+        private LeaderLatch leaderLatch;
+        private String hostName;
+        private String STORM_ROOT;
+
+        public LeaderLatchListenerImpl(Map conf, CuratorFramework zk, LeaderLatch leaderLatch) {
+            this.conf = conf;
+            this.zk = zk;
+            this.leaderLatch = leaderLatch;
+            try {
+                this.hostName = InetAddress.getLocalHost().getCanonicalHostName();
+            }catch (UnknownHostException e){
+                throw new RuntimeException(e);
+            }
+            this.STORM_ROOT = conf.get(Config.STORM_ZOOKEEPER_ROOT) + "/storms";
+
+        }
+
+        /**
+         * 这里保证只有本地的拓扑集合信息包含ZK上的拓扑集合信息上的时候
+         * 当前机器才能够成为Leader
+         */
+        @Override
+        public void isLeader() {
+            LOG.info(hostName + " gained leadership, checking if it has all the topology code locally.");
+            Set<String> activeTopologyIds = new HashSet<>(getChildren(zk, STORM_ROOT, false));
+            String[] localTopologyIds = new File(ConfigUtils.getMasterStormDistRoot(conf)).list();
+            Set diffTopology = Util.inFirstNotInSecond(activeTopologyIds, new HashSet(Arrays.asList(localTopologyIds)));
+
+            LOG.info("active-topology-ids [" + StringUtils.join(activeTopologyIds, ",") +
+            "] local-topology-ids [" + StringUtils.join(localTopologyIds, ",") +
+            "] diff-topology [" + StringUtils.join(diffTopology, ",") + "]");
+
+            if(diffTopology == null || diffTopology.size() == 0){
+                LOG.info("Accepting leadership, all active topology found localy.");
+            }else{
+                LOG.info("code for all active topologies not available locally, giving up leadership.");
+                try {
+                    leaderLatch.close();
+                }catch (IOException e){
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        public void notLeader() {
+            LOG.info(hostName + " lost leadership.");
+        }
+    }
+
+    public static class ZooKeeperLeaderElector implements ILeaderElector {
+        private Map conf;
+        private List<String> severs;
+        private CuratorFramework zk;
+        private String leaderLockPath;
+        private String id;
+        private LeaderLatch leaderLatch;
+        private LeaderLatchListener leaderLatchListener;
+        private ReentrantLock lock;
+
+        public ZooKeeperLeaderElector(Map conf) {
+            this.conf = conf;
+            this.severs = (List<String>)conf.get(Config.STORM_ZOOKEEPER_SERVERS);
+            this.zk = makeClient(conf, severs, (Integer)conf.get(Config.STORM_ZOOKEEPER_PORT),
+                   null, null, conf);
+            this.leaderLockPath = conf.get(Config.STORM_ZOOKEEPER_ROOT) + "/leader-lock";
+            this.id = NimbusInfo.fromConf(conf).toHostPortString();
+            this.leaderLatch = new LeaderLatch(zk, leaderLockPath, id);
+            this.leaderLatchListener = new LeaderLatchListenerImpl(conf, zk, leaderLatch);
+        }
+
+        @Override
+        public void close() {
+            LOG.info("closing zookeeper connection of leader elector.");
+        }
+
+        @Override
+        public List<NimbusInfo> getAllNimbuses() {
+            List<NimbusInfo> allParticipants = new ArrayList<>();
+            try {
+                Collection<Participant> participants = leaderLatch.getParticipants();
+                for(Participant participant : participants){
+                    allParticipants.add(toNimbusInfo(participant));
+                }
+            }catch (Exception e){
+                throw new RuntimeException(e);
+            }
+            return allParticipants;
+        }
+
+        @Override
+        public NimbusInfo getLeader() {
+            try {
+                //将leader包装为leaderLatch
+                return toNimbusInfo(leaderLatch.getLeader());
+            }catch (Exception e){
+
+            }
+            return null;
+        }
+
+        @Override
+        public boolean isLeader() throws Exception {
+            return leaderLatch.hasLeadership();
+        }
+
+        @Override
+        public void removeFromLeaderLockQueue() {
+            lock.lock();
+            try {
+                //只有已经开始的leaderLatch才可以被close掉
+                if(LeaderLatch.State.STARTED == leaderLatch.getState()){
+                    leaderLatch.close();//放弃Leader选举
+                    LOG.info("Removed from leader lock queue.");
+                } else{
+                    LOG.info("leader latch is not started so no removeFromLeaderLockQueue needed.");
+                }
+            }catch (Exception e){
+
+            }finally {
+                lock.unlock();
+            }
+
+        }
+
+        @Override
+        public void addToLeaderLockQueue() {
+            lock.lock();
+            try {
+                //如果当前leaderLatch已经被Close了，我们需要创建一个新的实例
+                if(leaderLatch.getState() == LeaderLatch.State.CLOSED){
+                    leaderLatch = new LeaderLatch(zk, leaderLockPath, id);
+                    leaderLatchListener = new LeaderLatchListenerImpl(conf, zk, leaderLatch);
+                }else if(leaderLatch.getState() == LeaderLatch.State.LATENT){
+                //只有当leaderLatch没有被开始的时候我们才可以调用leaderLatch的start
+                    leaderLatch.addListener(leaderLatchListener);
+                    leaderLatch.start();//参加leader选举
+                    LOG.info("Queued up for leader lock.");
+                }else{
+                    LOG.info("Node already in queue for leader lock.");
+                }
+            }catch (Exception e) {
+                throw new RuntimeException(e);
+            }finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        public void prepare(Map conf) {
+            LOG.info("no-op for zookeeper implementation");
+        }
+    }
 
 
 }

@@ -11,10 +11,11 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import java.util.*;
 
 /**
  * @author float.lu
@@ -23,7 +24,7 @@ public class ServiceHandler implements Nimbus.Iface, Shutdownable, DaemonCommon 
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceHandler.class);
 
-    private Properties conf;
+    private Map conf;
     private INimbus iNimbus;
 
     private Properties nimbus;
@@ -39,7 +40,7 @@ public class ServiceHandler implements Nimbus.Iface, Shutdownable, DaemonCommon 
     private void prepare(){
         try {
             iNimbus.prepare(conf, ConfigUtils.getMasterInimbusDir(conf));
-        }catch (IOException ioe){
+        }catch (Exception e){
             LOG.error("Error on initialization of server " + ServiceHandler.class.getName());
             Util.existProcess(13, "Error on initialization");
         }
@@ -50,17 +51,18 @@ public class ServiceHandler implements Nimbus.Iface, Shutdownable, DaemonCommon 
 
     }
 
-    public static Properties getNimbusData(Properties conf, INimbus iNimbus) throws Exception{
+    public static Map getNimbusData(Properties conf, INimbus iNimbus) throws Exception{
         IScheduler forcedScheduler = iNimbus.getForcedScheduler();
         Properties props = new Properties();
         props.put("conf", conf);
         props.put("nimbus_host_port_info", NimbusInfo.fromConf(conf));
         props.put("inimbus", iNimbus);
         props.put("authorization_handler", Common.mkAuthorizationHandler(conf.getProperty(Config.NIMBUS_AUTHORIZER), conf));
-        props.put("impersonation_authorization_handler", Common.mkAuthorizationHandler(conf.getProperty(Config.NIMBUS_IMPERSONATION_AUTHORIZER), conf);
+        props.put("impersonation_authorization_handler", Common.mkAuthorizationHandler(conf.getProperty(Config.NIMBUS_IMPERSONATION_AUTHORIZER), conf));
         props.put("submitted_count", new AtomicInteger(0));
-        props.put("storm_cluster_state", )
+       // props.put("storm_cluster_state", );
 
+        return null;
     }
 
 

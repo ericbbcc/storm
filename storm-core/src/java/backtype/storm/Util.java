@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author float.lu
@@ -67,6 +69,17 @@ public class Util {
             byteBuffer.putInt(v);
         }
         return byteBuffer.array();
+    }
+
+    //returns ones in first set not in second
+    public static Set inFirstNotInSecond(Set firstSet, Set secondSet){
+        Set s = new HashSet();
+        for(Object o : firstSet){
+            if(!secondSet.contains(o)){
+                s.add(o);
+            }
+        }
+        return s;
     }
 
 }
