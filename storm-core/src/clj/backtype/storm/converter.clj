@@ -81,7 +81,7 @@
           (into [] list-of-executors)) ; list of executors must be coverted to clojure vector to ensure it is sortable.
         executor->node_port))))
 
-(defn clojurify-worker->resources [worker->resources]
+(defn clojurify-worker->resources [worker->resources];;Map<NodeInfo,WorkerResources>
   "convert worker info to be [node, port]
    convert resources to be [mem_on_heap mem_off_heap cpu]"
   (into {} (map

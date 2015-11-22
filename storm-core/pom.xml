@@ -36,6 +36,14 @@
     </properties>
 
     <dependencies>
+        <!--float.lu -->
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+
+        <!--float.lu end-->
         <dependency>
             <groupId>com.esotericsoftware.kryo</groupId>
             <artifactId>kryo</artifactId>

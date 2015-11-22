@@ -29,7 +29,7 @@ public class ServiceHandler implements Nimbus.Iface, Shutdownable, DaemonCommon 
 
     private Properties nimbus;
 
-    public ServiceHandler(Properties conf, INimbus iNimbus) {
+    public ServiceHandler(Map conf, INimbus iNimbus) {
         this.conf = conf;
         this.iNimbus = iNimbus;
         prepare();
@@ -51,16 +51,17 @@ public class ServiceHandler implements Nimbus.Iface, Shutdownable, DaemonCommon 
 
     }
 
-    public static Map getNimbusData(Properties conf, INimbus iNimbus) throws Exception{
+    public static Map getNimbusData(Map conf, INimbus iNimbus) throws Exception{
         IScheduler forcedScheduler = iNimbus.getForcedScheduler();
-        Properties props = new Properties();
-        props.put("conf", conf);
-        props.put("nimbus_host_port_info", NimbusInfo.fromConf(conf));
-        props.put("inimbus", iNimbus);
-        props.put("authorization_handler", Common.mkAuthorizationHandler(conf.getProperty(Config.NIMBUS_AUTHORIZER), conf));
-        props.put("impersonation_authorization_handler", Common.mkAuthorizationHandler(conf.getProperty(Config.NIMBUS_IMPERSONATION_AUTHORIZER), conf));
-        props.put("submitted_count", new AtomicInteger(0));
-       // props.put("storm_cluster_state", );
+
+        Map data = new HashMap();
+        data.put("conf", conf);
+        data.put("nimbus-host-port-info", NimbusInfo.fromConf(conf));
+        data.put("inimbus", iNimbus);
+        data.put("authorization-handler", Common.mkAuthorizationHandler((String)conf.get(Config.NIMBUS_AUTHORIZER), conf));
+        data.put("impersonation-authorization-handler", Common.mkAuthorizationHandler((String)conf.get(Config.NIMBUS_IMPERSONATION_AUTHORIZER), conf))
+        data.put("submitted-count", new AtomicInteger(0));
+        data.put("storm-cluster-state", )
 
         return null;
     }

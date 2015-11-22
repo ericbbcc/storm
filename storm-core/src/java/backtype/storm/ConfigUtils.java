@@ -6,6 +6,8 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -69,5 +71,12 @@ public class ConfigUtils {
 
     public static String getFilePathSeparator(){
         return System.getProperty("file.separator");
+    }
+
+    public static String stringifyError(Throwable e){
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        e.printStackTrace(printWriter);
+        return writer.toString();
     }
 }

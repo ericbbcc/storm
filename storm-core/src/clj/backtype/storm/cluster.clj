@@ -61,8 +61,8 @@
   (let [zk (zk/mk-client conf (conf STORM-ZOOKEEPER-SERVERS) (conf STORM-ZOOKEEPER-PORT) :auth-conf auth-conf)]
     (zk/mkdirs zk (conf STORM-ZOOKEEPER-ROOT) acls)
     (.close zk))
-  (let [callbacks (atom {})
-        active (atom true)
+  (let [callbacks (atom {});;id->
+        active (atom true);;AtomicBoolean
         zk-writer (zk/mk-client conf
                          (conf STORM-ZOOKEEPER-SERVERS)
                          (conf STORM-ZOOKEEPER-PORT)
@@ -73,8 +73,8 @@
                                       (when-not (= :connected state)
                                         (log-warn "Received event " state ":" type ":" path " with disconnected Writer Zookeeper."))
                                       (when-not (= :none type)
-                                        (doseq [callback (vals @callbacks)]
-                                          (callback type path))))))
+                                        (doseq [callback (vals @callbacks)] ;;Map的values exp:(doseq [i [1 2 3]] (println i))
+                                          (callback type path))))));;遍历callbacks调用每个回调函数
         zk-reader (if separate-zk-writer?
                     (zk/mk-client conf
                          (conf STORM-ZOOKEEPER-SERVERS)
@@ -95,7 +95,7 @@
      (register
        [this callback]
        (let [id (uuid)]
-         (swap! callbacks assoc id callback)
+         (swap! callbacks assoc id callback);;{id : callback} --> callbacks
          id))
 
      (unregister
@@ -308,14 +308,14 @@
   (let [cb @cb-atom]
     (reset! cb-atom nil)
     (when cb
-      (cb))))
+      (cb))));;调用回调函数
 
 (defn- issue-map-callback!
   [cb-atom id]
   (let [cb (@cb-atom id)]
     (swap! cb-atom dissoc id)
     (when cb
-      (cb id))))
+      (cb id))));;调用回调函数
 
 (defn- maybe-deserialize
   [ser clazz]
@@ -332,7 +332,7 @@
   "Ensures that we only return heartbeats for executors assigned to
   this worker."
   [executors worker-hb]
-  (let [executor-stats (:executor-stats worker-hb)]
+  (let [executor-stats (:executor-stats worker-hb)];;每个work对应多个executors
     (->> executors
          (map (fn [t]
                 (if (contains? executor-stats t)
@@ -362,9 +362,9 @@
                   cluster-state
                   (fn [type path]
                     (let [[subtree & args] (tokenize-path path)]
-                      (condp = subtree
-                         ASSIGNMENTS-ROOT (if (empty? args)
-                                             (issue-callback! assignments-callback)
+                      (condp = subtree;;相当于Java中的switch
+                         ASSIGNMENTS-ROOT (if (empty? args);;如果args为空，说明/assignments子节点发生变化了
+                                             (issue-callback! assignments-callback);;执行回调函数
                                              (do
                                                (issue-map-callback! assignment-info-callback (first args))
                                                (issue-map-callback! assignment-version-callback (first args))

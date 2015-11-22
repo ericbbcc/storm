@@ -2,7 +2,7 @@ package backtype.storm.daemon;
 
 import backtype.storm.security.auth.IAuthorizer;
 
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author float.lu
@@ -10,7 +10,7 @@ import java.util.Properties;
 public class Common {
 
 
-    public static IAuthorizer mkAuthorizationHandler(String klassName, Properties conf)throws ClassNotFoundException,
+    public static IAuthorizer mkAuthorizationHandler(String klassName, Map conf)throws ClassNotFoundException,
             IllegalAccessException, InstantiationException{
         Class clazz = Class.forName(klassName);
         if(clazz != null){

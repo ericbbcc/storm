@@ -81,10 +81,11 @@ public class ZooKeeper {
     }
 
     public static class DefaultWatcher implements Watcher{
+
         @Override
         public void process(WatchedEvent event) {
-            LOG.info("ZooKeeper state update:" + zooKeeperStates.get(event.getState())
-                    + zooKeeperEventTypes.get(event.getType()) + event.getPath());
+            LOG.info("ZooKeeper state update:" + event.getState()
+                    + event.getType() + event.getPath());
         }
     }
 
@@ -127,10 +128,9 @@ public class ZooKeeper {
     }
 
     public static String createNode(CuratorFramework zk, String path, byte[] data, CreateMode mode, List<ACL> acls){
-        CreateMode createMode = zooKeeperCreateModes.get(mode);
         try {
             return zk.create().creatingParentsIfNeeded()
-                    .withMode(createMode)
+                    .withMode(mode)
                     .withACL(acls)
                     .forPath(Util.normalizePath(path), data);
         }catch (Exception e){
