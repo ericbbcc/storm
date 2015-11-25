@@ -10,7 +10,6 @@ import backtype.storm.utils.MyCollectionUtils;
 import backtype.storm.utils.Time;
 import backtype.storm.utils.Utils;
 import com.google.common.collect.Maps;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.state.ConnectionState;
 import org.apache.curator.framework.state.ConnectionStateListener;
@@ -268,11 +267,11 @@ public class Cluster {
     public static final String STORMS_SUBTREE = "/" + STORMS_ROOT;
     public static final String SUPERVISORS_SUBTREE = "/" + SUPERVISORS_ROOT;
     public static final String WORKERBEATS_SUBTREE = "/" + WORKERBEATS_ROOT;
-    public static final String BACKPRESSURE_SUBTREE = "/" + BACKPRESSURE_ROOT;
+    public static final String BACKPRESSURE_SUBTREE = "/" + BACKPRESSURE_ROOT;//
     public static final String ERRORS_SUBTREE = "/" + ERRORS_ROOT;
     public static final String CODE_DISTRIBUTOR_SUBTREE = "/" + CODE_DISTRIBUTOR_ROOT;
     public static final String NIMBUSES_SUBTREE = "/" + NIMBUSES_ROOT;
-    public static final String CREDENTIALS_SUBTREE = "/" + CREDENTIALS_ROOT;
+    public static final String CREDENTIALS_SUBTREE = "/" + CREDENTIALS_ROOT;//
     public static final String LOGCONFIG_SUBTREE = "/" + LOGCONFIG_ROOT;
 
     //supervisor path = /supervisors/id
@@ -491,9 +490,7 @@ public class Cluster {
 
         @Override
         public List<String> assignments(Callback callback) {
-            if(callback != null){
-                assignmentsCallback = callback;
-            }
+            assignmentsCallbackUpdater.set(this, callback);
             return clusterState.getChildren(ASSIGNMENTS_SUBTREE, callback != null);
         }
 
@@ -883,6 +880,9 @@ public class Cluster {
         @Override
         public void disconnect() {
             clusterState.unregister(stateId);
+            if (solo) {
+                clusterState.close();
+            }
         }
     }
 
